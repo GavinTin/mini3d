@@ -31,7 +31,7 @@ typedef struct { float m[4][4]; } matrix_t;
 typedef struct { float x, y, z, w; } vector_t;
 typedef vector_t point_t;
 
-int CMID(int x, int min, int max) { return (x < min)? min : ((x > max)? max : x); }
+int CMID(int x, int min, int max) { return (x < min)? min : ((x > max)? max  : x); }//查询中间值
 
 // 计算插值：t 为 [0, 1] 之间的数值
 float interp(float x1, float x2, float t) { return x1 + (x2 - x1) * t; }
@@ -904,7 +904,7 @@ int main(void)
 {
 	device_t device;
 	int states[] = { RENDER_STATE_TEXTURE, RENDER_STATE_COLOR, RENDER_STATE_WIREFRAME };
-	int indicator = 0;
+	int indicator = 0;//指示符
 	int kbhit = 0;
 	float alpha = 1;
 	float pos = 3.5;
