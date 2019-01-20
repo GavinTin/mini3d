@@ -176,7 +176,7 @@ void matrix_set_scale(matrix_t *m, float x, float y, float z) {
 	m->m[2][2] = z;
 }
 
-// 旋转矩阵
+// 旋转矩阵 四元数转化到矩阵
 void matrix_set_rotate(matrix_t *m, float x, float y, float z, float theta) {
 	float qsin = (float)sin(theta * 0.5f);
 	float qcos = (float)cos(theta * 0.5f);
@@ -209,7 +209,7 @@ void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, con
 	vector_crossproduct(&xaxis, up, &zaxis);
 	vector_normalize(&xaxis);
 	vector_crossproduct(&yaxis, &zaxis, &xaxis);
-
+		
 	m->m[0][0] = xaxis.x;
 	m->m[1][0] = xaxis.y;
 	m->m[2][0] = xaxis.z;
@@ -229,7 +229,7 @@ void matrix_set_lookat(matrix_t *m, const vector_t *eye, const vector_t *at, con
 	m->m[3][3] = 1.0f;
 }
 
-// D3DXMatrixPerspectiveFovLH
+// D3DXMatrixPerspectiveFovLH   在MSDN的文档中有这样一个数学公式：y-scale = cot（fovy/2） aspect高宽比
 void matrix_set_perspective(matrix_t *m, float fovy, float aspect, float zn, float zf) {
 	float fax = 1.0f / (float)tan(fovy * 0.5f);
 	matrix_set_zero(m);
@@ -276,7 +276,7 @@ void transform_apply(const transform_t *ts, vector_t *y, const vector_t *x) {
 	matrix_apply(y, x, &ts->transform);
 }
 
-// 检查齐次坐标同 cvv 的边界用于视锥裁剪
+// 检查齐次坐标同 cvv 的边界用于视锥裁剪  点从视锥体(frustum)变换到规则观察体CVV(Canonical View Volume)中
 int transform_check_cvv(const vector_t *v) {
 	float w = v->w;
 	int check = 0;
@@ -293,7 +293,7 @@ int transform_check_cvv(const vector_t *v) {
 void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x) {
 	float rhw = 1.0f / x->w;
 	y->x = (x->x * rhw + 1.0f) * ts->w * 0.5f;
-	y->y = (1.0f - x->y * rhw) * ts->h * 0.5f;
+	y->y = (1.0f - x->y * rhw) * ts->h * 0.5f;//裁剪空间中y向上，屏幕空间中y向下
 	y->z = x->z * rhw;
 	y->w = 1.0f;
 }
@@ -304,7 +304,7 @@ void transform_homogenize(const transform_t *ts, vector_t *y, const vector_t *x)
 //=====================================================================
 typedef struct { float r, g, b; } color_t;
 typedef struct { float u, v; } texcoord_t;
-typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;
+typedef struct { point_t pos; texcoord_t tc; color_t color; float rhw; } vertex_t;//RHW值代表了某个顶点(x,y,z,w)的齐次点的W的倒数
 
 typedef struct { vertex_t v, v1, v2; } edge_t;
 typedef struct { float top, bottom; edge_t left, right; } trapezoid_t;
@@ -436,7 +436,7 @@ void trapezoid_edge_interp(trapezoid_t *trap, float y) {
 // 根据左右两边的端点，初始化计算出扫描线的起点和步长
 void trapezoid_init_scan_line(const trapezoid_t *trap, scanline_t *scanline, int y) {
 	float width = trap->right.v.pos.x - trap->left.v.pos.x;
-	scanline->x = (int)(trap->left.v.pos.x + 0.5f);
+	scanline->x = (int)(trap->left.v.pos.x + 0.5f);//0.5?
 	scanline->w = (int)(trap->right.v.pos.x + 0.5f) - scanline->x;
 	scanline->y = y;
 	scanline->v = trap->left.v;
